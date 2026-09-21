@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#173f35" />
+    <meta name="description" content="专插本英语固定搭配学习与艾宾浩斯复习工具" />
+    <title>搭配之间 · 专插本英语</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%23173f35%22/><path d=%22M18 17h22c5 0 8 3 8 8v22H26c-5 0-8-3-8-8V17Z%22 fill=%22%23f5df8d%22/><path d=%22M25 25h16M25 32h16M25 39h10%22 stroke=%22%23173f35%22 stroke-width=%223%22 stroke-linecap=%22round%22/></svg>" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="paper-grain"></div>
+    <header class="topbar">
+      <a class="brand" href="#today" aria-label="搭配之间首页">
+        <span class="brand-mark">搭</span>
+        <span><strong>搭配之间</strong><small>专插本英语词块训练</small></span>
+      </a>
+      <div class="streak" title="连续学习天数"><span>🔥</span><b id="streak-count">0</b> 天</div>
+    </header>
+
+    <main class="shell">
+      <aside class="sidebar" aria-label="主导航">
+        <button class="nav-item active" data-view="today"><span>今日</span><small>Today</small></button>
+        <button class="nav-item" data-view="library"><span>词库</span><small>Library</small></button>
+        <button class="nav-item" data-view="review"><span>复习</span><small>Review</small></button>
+        <button class="nav-item" data-view="settings"><span>设置</span><small>Settings</small></button>
+        <div class="schedule-note">
+          <span>记忆节奏</span>
+          <b>1 · 3 · 7 · 15 · 30 · 60</b>
+          <small>按掌握程度自动安排</small>
+        </div>
+      </aside>
+
+      <section class="content">
+        <div id="loading" class="empty-state">正在整理你的词库…</div>
+
+        <section id="view-today" class="view" hidden>
+          <div class="page-heading">
+            <div><p class="eyebrow">DAILY PRACTICE</p><h1>今天，记住一点点</h1><p id="today-subtitle">先完成到期复习，再认识新搭配。</p></div>
+            <div class="progress-ring" id="goal-ring"><span><b id="goal-done">0</b><small>/ 20</small></span></div>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+          <section class="study-panel" id="study-panel"></section>
+        </section>
+
+        <section id="view-library" class="view" hidden>
+          <div class="page-heading compact">
+            <div><p class="eyebrow">PHRASE LIBRARY</p><h1>全部搭配</h1><p>英文、中文、例句均可搜索。</p></div>
+            <label class="search-box"><span>⌕</span><input id="search-input" type="search" placeholder="搜索 be able to / 能够…" /></label>
+          </div>
+          <div class="filter-row">
+            <button class="chip active" data-filter="all">全部</button>
+            <button class="chip" data-filter="unseen">未学</button>
+            <button class="chip" data-filter="learning">学习中</button>
+            <button class="chip" data-filter="mastered">已掌握</button>
+            <span id="library-count"></span>
+          </div>
+          <div id="library-list" class="phrase-list"></div>
+        </section>
+
+        <section id="view-review" class="view" hidden>
+          <div class="page-heading compact">
+            <div><p class="eyebrow">ACTIVE RECALL</p><h1>挖空复习</h1><p>先在脑中补全，再揭晓答案并诚实评分。</p></div>
+          </div>
+          <div class="review-layout">
+            <section id="review-card" class="study-panel"></section>
+            <aside class="memory-guide">
+              <h2>评分怎么选？</h2>
+              <p><b>忘记</b>：完全想不起来，10 分钟后重来。</p>
+              <p><b>模糊</b>：有印象但不确定，明天再见。</p>
+              <p><b>认识</b>：能够快速、完整地说出答案。</p>
+              <div class="timeline"><span>1天</span><span>3天</span><span>7天</span><span>15天</span><span>30天</span><span>60天</span></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="view-settings" class="view" hidden>
+          <div class="page-heading compact"><div><p class="eyebrow">PREFERENCES</p><h1>学习设置</h1><p>目标要小到每天都做得完。</p></div></div>
+          <div class="settings-card">
+            <label for="daily-goal"><span><b>每日目标</b><small>每天安排的新学与复习总量</small></span><select id="daily-goal"><option>10</option><option selected>20</option><option>30</option><option>50</option></select></label>
+            <label><span><b>进度存储</b><small>数据只保存在当前浏览器，不会上传服务器</small></span><em>本地保存</em></label>
+            <div class="danger-zone"><div><b>清空学习记录</b><small>词库不会删除，所有卡片会恢复为未学习。</small></div><button id="reset-progress" class="outline danger">清空记录</button></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer>愿你记住的，不只停留在今天。 · <a href="https://github.com/bankeluilian/phrase-garden">GitHub</a></footer>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>
