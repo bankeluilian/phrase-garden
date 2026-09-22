@@ -1,0 +1,18 @@
+[hidden]{display:none!important}
+button{touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.quiz-hint,.quiz-instruction{font:13px/1.6 system-ui,sans-serif;color:var(--muted)}
+.quiz-prompt{margin:28px 0 20px;font-size:clamp(27px,4vw,44px);line-height:1.35;letter-spacing:-.02em}
+.quiz-options{display:grid;gap:10px;margin-top:16px}
+.quiz-option{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fffdf7;color:var(--ink);text-align:left;font:16px/1.5 system-ui,sans-serif;cursor:pointer;overflow-wrap:anywhere}
+.quiz-option span{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:8px;background:var(--cream);font-size:12px;color:var(--muted)}
+.quiz-option b{font-weight:500;min-width:0}
+.quiz-option em{margin-left:auto;font-style:normal}
+.quiz-option:disabled{cursor:default;opacity:1}
+.quiz-option.correct{background:#e1eee3;border-color:#407e51}
+.quiz-option.incorrect{background:#f8e5e0;border-color:var(--red)}
+.quiz-feedback{margin-top:20px;font:14px/1.6 system-ui,sans-serif}
+.quiz-feedback p{margin:5px 0;color:var(--muted)}
+.quiz-next{width:100%;min-height:52px;margin-top:16px;background:var(--forest);color:white;border:0;border-radius:13px;font:700 16px system-ui,sans-serif;cursor:pointer}
+@media(max-width:850px){.sidebar{bottom:max(12px,env(safe-area-inset-bottom))}.shell{padding-bottom:110px}#toast{bottom:100px}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.stat{padding:12px 6px;text-align:center}.stat b{font-size:22px}.stat span{font-size:11px}.study-panel{padding:24px 20px}.card-meta{gap:8px;letter-spacing:0;line-height:1.5}}
+@media(max-width:560px){.topbar{height:64px}.shell{padding:22px 12px 105px}.page-heading{gap:12px;margin-bottom:20px}.page-heading h1{font-size:27px;line-height:1.2}.page-heading p:last-child{font-size:12px;line-height:1.6}.progress-ring{width:62px;height:62px}.study-panel{border-radius:20px;padding:22px 16px}.quiz-prompt{margin-top:24px;font-size:29px}.quiz-option{padding:12px;min-height:56px;font-size:16px}.settings-card{padding:5px 16px}.settings-card>label,.danger-zone{gap:12px;flex-wrap:wrap}.search-box input{font-size:16px}.empty-state{padding:35px 15px}.phrase-row{overflow-wrap:anywhere}footer{padding-bottom:110px}}

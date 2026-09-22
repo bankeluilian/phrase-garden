@@ -1,9 +1,10 @@
-import { buildCloze, gradeProgress, selectDailyCards, summarizeProgress } from './study-core.mjs';
+import { createQuiz, answerQuiz, quizOptions, gradeProgress, selectDailyCards, summarizeProgress } from './study-core.mjs?v=2';
 
 const STORAGE_KEY = 'phrase-garden-v1';
 const state = {
   cards: [], progress: {}, settings: { goal: 20 }, history: [], session: [], index: 0,
   view: 'today', filter: 'all', query: '', revealed: false,
+  practice: { day: '', sessions: {} },
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -15,12 +16,13 @@ function loadState() {
     state.progress = saved.progress || {};
     state.settings = { goal: 20, ...(saved.settings || {}) };
     state.history = Array.isArray(saved.history) ? saved.history : [];
-  } catch { localStorage.removeItem(STORAGE_KEY); }
+    if (saved.practice?.day === dayKey()) state.practice = saved.practice;
+  } catch { toast('学习记录读取失败，请先备份浏览器数据'); }
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    progress: state.progress, settings: state.settings, history: state.history.slice(-600),
+    progress: state.progress, settings: state.settings, history: state.history, practice: state.practice,
   }));
 }
 
@@ -29,7 +31,7 @@ function dayKey(value = Date.now()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function dailyDone() { return state.history.filter((item) => dayKey(item.at) === dayKey()).length; }
+function dailyDone() { return new Set(state.history.filter((item) => dayKey(item.at) === dayKey()).map(item => item.cardId)).size; }
 
 function streak() {
   const days = new Set(state.history.map((item) => dayKey(item.at)));
@@ -65,20 +67,33 @@ function renderStats() {
   $('#streak-count').textContent = streak();
 }
 
-function cardMarkup(card, context, position, total) {
-  if (!card) return `<div class="empty-card"><div><h2>今天完成啦</h2><p>休息一下，明天会按记忆规律继续安排。</p><button class="outline" data-go="library">逛逛全部词库</button></div></div>`;
-  const progress = state.progress[card.id];
-  const cloze = buildCloze(card);
-  const isReview = context === 'review';
-  const prompt = isReview ? cloze.question : card.en;
-  return `<div class="card-meta"><span>${card.category || '固定搭配'}</span><span>${position} / ${total}</span></div>
-    <h2 class="phrase">${escapeHtml(prompt)}</h2>
-    <p class="meaning ${isReview && !state.revealed ? 'reveal' : 'shown'}" data-reveal>${escapeHtml(isReview ? `${cloze.answer} · ${card.zh}` : card.zh)}</p>
-    ${card.example ? `<div class="example ${isReview && !state.revealed ? 'reveal' : 'shown'}" data-reveal><b>${escapeHtml(card.example)}</b>${escapeHtml(card.translation || '')}</div>` : ''}
-    <div class="note">${escapeHtml(card.note || '把英文搭配和中文含义整体记忆，回想时先遮住答案。')}${progress ? ` · 当前阶段 ${progress.stage}/6` : ' · 新卡片'}</div>
-    <div class="study-actions">
-      ${isReview && !state.revealed ? '<button class="rate-good" data-action="reveal">揭晓答案</button>' : '<button class="rate-again" data-rating="again">忘记</button><button class="rate-hard" data-rating="hard">模糊</button><button class="rate-good" data-rating="good">认识</button>'}
-    </div>`;
+function getSession(context) {
+  if (state.practice.day !== dayKey()) state.practice = { day: dayKey(), sessions: {} };
+  if (!state.practice.sessions[context]) {
+    const completed = new Set(state.history.filter(item => dayKey(item.at) === dayKey()).map(item => item.cardId));
+    const available = state.cards.filter(card => !completed.has(card.id));
+    const count = Math.max(0, state.settings.goal - dailyDone());
+    const cards = context === 'review' ? dueCards() : count ? selectDailyCards(available, state.progress, Date.now(), count) : [];
+    state.practice.sessions[context] = { quiz: createQuiz(cards), feedback: null, options: null };
+  }
+  return state.practice.sessions[context];
+}
+
+function cardMarkup(context) {
+  const session = getSession(context);
+  const { quiz, feedback } = session;
+  if (quiz.done && !feedback) return `<div class="empty-card"><div><h2>${context === 'review' ? '到期复习已完成' : '今天完成啦'}</h2><p>学习记录已保存，明天继续。</p><button class="outline" data-go="library">逛逛全部词库</button></div></div>`;
+  const task = feedback || { ...quiz.queue[0], direction: quiz.direction, group: quiz.group };
+  const card = state.cards.find(item => item.id === task.id);
+  const language = task.direction === 'en' ? 'zh' : 'en';
+  if (!session.options) session.options = quizOptions(card, task.direction, state.cards);
+  saveState();
+  return `<div class="card-meta"><span>第 ${task.group + 1} / ${Math.ceil(quiz.ids.length / 5)} 组</span><span>${task.direction === 'en' ? '① 英文 → 中文' : '② 中文 → 英文'}</span></div>
+    <p class="quiz-hint">${task.spacer ? '穿插巩固 · 错题稍后再见' : '每组 5 个 · 整组完成后切换语言'}</p>
+    <h2 class="phrase quiz-prompt" lang="${task.direction === 'en' ? 'en' : 'zh-CN'}">${escapeHtml(card[task.direction])}</h2>
+    <p class="quiz-instruction">${task.direction === 'en' ? '选择对应的中文含义' : '选择对应的英文搭配'}</p>
+    <div class="quiz-options">${session.options.map((label, index) => `<button class="quiz-option ${feedback ? label === card[language] ? 'correct' : index === feedback.choice ? 'incorrect' : '' : ''}" data-choice="${index}" ${feedback ? 'disabled' : ''}><span>${'ABCD'[index]}</span><b>${escapeHtml(label)}</b>${feedback && label === card[language] ? '<em>✓</em>' : ''}</button>`).join('')}</div>
+    ${feedback ? `<div class="quiz-feedback" role="status"><strong>${feedback.correct ? '答对了' : '再记一次：' + escapeHtml(card[language])}</strong><p>${feedback.correct ? '点击下一题继续' : '这道题会隔 2 道题再出现。'}</p>${card.example ? `<p>${escapeHtml(card.example)}<br>${escapeHtml(card.translation || '')}</p>` : ''}</div><button class="quiz-next" data-action="next">${quiz.done ? '完成本轮' : '下一题'} →</button>` : ''}`;
 }
 
 function escapeHtml(value = '') {
@@ -86,39 +101,39 @@ function escapeHtml(value = '') {
 }
 
 function refreshSession() {
-  state.session = selectDailyCards(state.cards, state.progress, Date.now(), state.settings.goal);
-  state.index = 0; state.revealed = false;
+  state.practice = { day: dayKey(), sessions: {} };
 }
 
 function renderToday() {
   renderStats();
-  if (!state.session.length || state.index >= state.session.length) refreshSession();
-  const card = state.session[state.index];
-  $('#study-panel').innerHTML = cardMarkup(card, 'today', Math.min(state.index + 1, state.session.length), state.session.length);
+  $('#study-panel').innerHTML = cardMarkup('today');
 }
 
 function dueCards() {
   const now = Date.now();
   const due = state.cards.filter((card) => state.progress[card.id]?.due <= now)
     .sort((a, b) => state.progress[a.id].due - state.progress[b.id].due);
-  if (due.length) return due;
-  return state.cards.filter((card) => state.progress[card.id]).sort((a, b) => (state.progress[a.id].lastReviewed || 0) - (state.progress[b.id].lastReviewed || 0)).slice(0, 20);
+  return due;
 }
 
 function renderReview() {
-  const cards = dueCards();
-  if (state.index >= cards.length) state.index = 0;
-  $('#review-card').innerHTML = cardMarkup(cards[state.index], 'review', Math.min(state.index + 1, cards.length), cards.length);
+  $('#review-card').innerHTML = cardMarkup('review');
 }
 
-function rate(rating) {
-  const cards = state.view === 'review' ? dueCards() : state.session;
-  const card = cards[state.index]; if (!card) return;
+function choose(choice) {
+  const session = getSession(state.view);
+  if (session.feedback || session.quiz.done || !session.options?.[choice]) return;
+  const quiz = session.quiz;
+  const task = quiz.queue[0];
+  const card = state.cards.find(item => item.id === task.id);
+  const correct = session.options[choice] === card[quiz.direction === 'en' ? 'zh' : 'en'];
+  session.feedback = { ...task, direction: quiz.direction, group: quiz.group, choice, correct };
   const now = Date.now();
-  state.progress[card.id] = gradeProgress(state.progress[card.id], rating, now);
-  state.history.push({ cardId: card.id, rating, at: now });
-  saveState(); state.index += 1; state.revealed = false;
-  toast(rating === 'again' ? '已安排 10 分钟后回炉' : rating === 'hard' ? '已安排明天复习' : '已加入间隔复习计划');
+  for (const {id, rating} of answerQuiz(quiz, correct, state.cards)) {
+    state.progress[id] = gradeProgress(state.progress[id], rating, now);
+    state.history.push({ cardId: id, rating, at: now });
+  }
+  saveState(); renderStats();
   if (state.view === 'review') renderReview(); else renderToday();
 }
 
@@ -141,17 +156,21 @@ function renderLibrary() {
 function bindEvents() {
   $$('.nav-item').forEach((button) => button.addEventListener('click', () => { state.index = 0; state.revealed = false; setView(button.dataset.view); }));
   document.addEventListener('click', (event) => {
-    const rating = event.target.closest('[data-rating]')?.dataset.rating;
-    if (rating) rate(rating);
-    if (event.target.closest('[data-action="reveal"]')) { state.revealed = true; renderReview(); }
+    const option = event.target.closest('[data-choice]');
+    if (option) choose(Number(option.dataset.choice));
+    if (event.target.closest('[data-action="next"]')) {
+      const session = getSession(state.view);
+      session.feedback = null; session.options = null; saveState();
+      if (state.view === 'review') renderReview(); else renderToday();
+    }
     const go = event.target.closest('[data-go]')?.dataset.go; if (go) setView(go);
   });
   $('#search-input').addEventListener('input', (event) => { state.query = event.target.value; renderLibrary(); });
   $$('.chip').forEach((chip) => chip.addEventListener('click', () => { $$('.chip').forEach((item) => item.classList.remove('active')); chip.classList.add('active'); state.filter = chip.dataset.filter; renderLibrary(); }));
-  $('#daily-goal').addEventListener('change', (event) => { state.settings.goal = Number(event.target.value); saveState(); refreshSession(); renderStats(); toast('每日目标已更新'); });
+  $('#daily-goal').addEventListener('change', (event) => { state.settings.goal = Number(event.target.value); saveState(); renderStats(); toast('目标已更新，下轮练习生效'); });
   $('#reset-progress').addEventListener('click', () => {
     if (!confirm('确定清空全部学习记录吗？该操作无法撤销。')) return;
-    state.progress = {}; state.history = []; saveState(); refreshSession(); renderStats(); toast('学习记录已清空');
+    state.progress = {}; state.history = []; refreshSession(); saveState(); renderStats(); toast('学习记录已清空');
   });
 }
 
@@ -162,7 +181,7 @@ async function init() {
   state.cards = await response.json();
   $('#loading').hidden = true;
   $('#daily-goal').value = String(state.settings.goal);
-  refreshSession(); bindEvents();
+  bindEvents();
   const initial = ['today', 'library', 'review', 'settings'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'today';
   setView(initial);
 }

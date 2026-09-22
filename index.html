@@ -7,7 +7,8 @@
     <meta name="description" content="专插本英语固定搭配学习与艾宾浩斯复习工具" />
     <title>搭配之间 · 专插本英语</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2216%22 fill=%22%23173f35%22/><path d=%22M18 17h22c5 0 8 3 8 8v22H26c-5 0-8-3-8-8V17Z%22 fill=%22%23f5df8d%22/><path d=%22M25 25h16M25 32h16M25 39h10%22 stroke=%22%23173f35%22 stroke-width=%223%22 stroke-linecap=%22round%22/></svg>" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=2" />
+    <link rel="stylesheet" href="./quiz.css?v=2" />
   </head>
   <body>
     <div class="paper-grain"></div>
@@ -37,7 +38,7 @@
 
         <section id="view-today" class="view" hidden>
           <div class="page-heading">
-            <div><p class="eyebrow">DAILY PRACTICE</p><h1>今天，记住一点点</h1><p id="today-subtitle">先完成到期复习，再认识新搭配。</p></div>
+            <div><p class="eyebrow">DAILY PRACTICE</p><h1>今天，记住一点点</h1><p id="today-subtitle">5 个一组，先选中文，再选英文。</p></div>
             <div class="progress-ring" id="goal-ring"><span><b id="goal-done">0</b><small>/ 20</small></span></div>
           </div>
           <div class="stats-grid" id="stats-grid"></div>
@@ -61,15 +62,15 @@
 
         <section id="view-review" class="view" hidden>
           <div class="page-heading compact">
-            <div><p class="eyebrow">ACTIVE RECALL</p><h1>挖空复习</h1><p>先在脑中补全，再揭晓答案并诚实评分。</p></div>
+            <div><p class="eyebrow">ACTIVE RECALL</p><h1>到期复习</h1><p>每组先英译中，再中译英；错题隔 2 道重现。</p></div>
           </div>
           <div class="review-layout">
             <section id="review-card" class="study-panel"></section>
             <aside class="memory-guide">
-              <h2>评分怎么选？</h2>
-              <p><b>忘记</b>：完全想不起来，10 分钟后重来。</p>
-              <p><b>模糊</b>：有印象但不确定，明天再见。</p>
-              <p><b>认识</b>：能够快速、完整地说出答案。</p>
+              <h2>每次记住 5 个</h2>
+              <p>整组完成英文选中文，再切换中文选英文。</p>
+              <p>选错后穿插 2 道题再试，组末也会安排巩固题。</p>
+              <p>两个方向都完成才记录进度。有错题明天复习，全对则延长复习间隔。</p>
               <div class="timeline"><span>1天</span><span>3天</span><span>7天</span><span>15天</span><span>30天</span><span>60天</span></div>
             </aside>
           </div>
@@ -88,6 +89,6 @@
 
     <footer>愿你记住的，不只停留在今天。 · <a href="https://github.com/bankeluilian/phrase-garden">GitHub</a></footer>
     <div id="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./app.mjs"></script>
+    <script type="module" src="./app.mjs?v=2"></script>
   </body>
 </html>
